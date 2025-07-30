@@ -54,18 +54,20 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
     // Optimistically update the UI immediately
     final currentFavorites = List<int>.from(state.favoriteIds);
     final isCurrentlyFavorite = currentFavorites.contains(event.itemId);
-    
+
     if (isCurrentlyFavorite) {
       currentFavorites.remove(event.itemId);
     } else {
       currentFavorites.add(event.itemId);
     }
-    
+
     // Emit the optimistic update immediately
-    emit(state.copyWith(
-      status: FavoriteStatus.success,
-      favoriteIds: currentFavorites,
-    ));
+    emit(
+      state.copyWith(
+        status: FavoriteStatus.success,
+        favoriteIds: currentFavorites,
+      ),
+    );
 
     // Then perform the actual toggle operation in the background
     final result = await _toggleFavorite(
@@ -75,13 +77,15 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
     result.fold(
       (failure) {
         // If the operation failed, revert the optimistic update
-        emit(state.copyWith(
-          status: FavoriteStatus.failure,
-          failure: failure,
-          message: _mapFailureToMessage(failure),
-          favoriteIds: state.favoriteIds, // Revert to previous state
-        ));
-        
+        emit(
+          state.copyWith(
+            status: FavoriteStatus.failure,
+            failure: failure,
+            message: _mapFailureToMessage(failure),
+            favoriteIds: state.favoriteIds, // Revert to previous state
+          ),
+        );
+
         // Then reload the actual state from storage
         _onLoadFavorites(const LoadFavoritesEvent(), emit);
       },
@@ -91,10 +95,12 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
         _getFavoriteItemIds(NoParams()).then((favoritesResult) {
           favoritesResult.fold(
             (failure) => null, // Ignore failure in confirmation
-            (favoriteIds) => emit(state.copyWith(
-              status: FavoriteStatus.success,
-              favoriteIds: favoriteIds,
-            )),
+            (favoriteIds) => emit(
+              state.copyWith(
+                status: FavoriteStatus.success,
+                favoriteIds: favoriteIds,
+              ),
+            ),
           );
         });
       },
